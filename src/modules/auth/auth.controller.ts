@@ -3,6 +3,7 @@ import { cookies } from 'next/headers';
 import { AuthService } from './auth.service';
 import { withSpan } from '@/lib/tracing';
 import { HttpException } from '@/lib/exceptions';
+import { toUserDto } from '@/lib/dto';
 
 function handleError(error: unknown) {
   if (error instanceof HttpException) {
@@ -16,8 +17,8 @@ export class AuthController {
     return withSpan('AuthController.register', async () => {
       try {
         const body = await request.json();
-        await AuthService.register(body);
-        return NextResponse.json({ message: 'Account created' }, { status: 201 });
+        const user = await AuthService.register(body);
+        return NextResponse.json(toUserDto(user), { status: 201 });
       } catch (error) {
         return handleError(error);
       }
@@ -36,7 +37,7 @@ export class AuthController {
           maxAge: 60 * 60 * 24 * 7,
         });
 
-        return NextResponse.json({ message: 'Logged in' });
+        return NextResponse.json(toUserDto(user));
       } catch (error) {
         return handleError(error);
       }

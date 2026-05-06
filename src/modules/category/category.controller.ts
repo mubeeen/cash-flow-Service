@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { CategoryService } from './category.service';
 import { withSpan } from '@/lib/tracing';
 import { HttpException } from '@/lib/exceptions';
+import { toCategoryDto } from '@/lib/dto';
 
 function handleError(error: unknown) {
   if (error instanceof HttpException) {
@@ -14,7 +15,7 @@ export class CategoryController {
   static async getAll() {
     return withSpan('CategoryController.getAll', async () => {
       const categories = await CategoryService.findAll();
-      return NextResponse.json(categories);
+      return NextResponse.json(categories.map(toCategoryDto));
     });
   }
 
@@ -23,7 +24,7 @@ export class CategoryController {
       try {
         const body = await request.json();
         const category = await CategoryService.create(body);
-        return NextResponse.json(category, { status: 201 });
+        return NextResponse.json(toCategoryDto(category), { status: 201 });
       } catch (error) {
         return handleError(error);
       }
