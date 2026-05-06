@@ -1,5 +1,15 @@
 # System Design Document — Expense Tracker
 
+## Intent
+
+The purpose of this application is **not** to build a complex product — it's to demonstrate how to design a **highly scalable, industrial-standard Node/TypeScript application** using enterprise patterns.
+
+I deliberately chose a simple domain (expense tracking) so the architecture decisions are easy to understand without getting lost in complex business logic. The focus is on **how** the system is built, not **what** it does.
+
+Every pattern here — layered architecture, schema validation, response envelopes, distributed tracing, DTOs — is the same approach used in production services handling millions of requests at companies like Stripe, Shopify, and Ritchie Bros.
+
+---
+
 ## Overview
 
 This application is designed as a **scalable, enterprise-grade Node/TypeScript service** following industry-standard patterns used in production microservices at companies like Stripe, Shopify, and Ritchie Bros.
