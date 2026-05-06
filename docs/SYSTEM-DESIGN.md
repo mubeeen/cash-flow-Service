@@ -235,3 +235,84 @@ src/modules/
 | Single service | Module extraction | Microservice mesh |
 | Manual deploys | CI/CD pipeline | GitOps (ArgoCD) |
 | Traces only | + Structured logging | + Metrics + SLOs + Alerting |
+
+---
+
+## 12. Response Envelope (Standardized API Contract)
+
+**Pattern:** Every endpoint returns a consistent JSON structure — `{ data }` for success, `{ data, meta }` for lists, `{ error }` for failures.
+
+**Response shapes:**
+
+```json
+// Single resource
+{ "data": { "id": "...", "item": "Coffee", "price": 5.5 } }
+
+// Collection with pagination
+{ "data": [...], "meta": { "page": 1, "limit": 10, "total": 42, "totalPages": 5 } }
+
+// Error
+{ "error": { "message": "Expense not found", "statusCode": 404 } }
+```
+
+**Why this matters at scale:**
+
+- **Frontend predictability** — Every API consumer writes one response handler. Check `response.data` for success, `response.error` for failure. No per-endpoint parsing logic.
+- **Backward-compatible evolution** — Need to add `requestId`, `deprecationWarning`, or `apiVersion`? Add it to the envelope without touching the `data` shape. Zero breaking changes.
+- **Pagination consistency** — Every list endpoint returns the same `meta` shape. Frontend pagination components are reusable across all resources.
+- **Error uniformity** — One error shape everywhere means one error boundary on the frontend, one alerting rule on the backend, one log parser in your observability stack.
+- **SDK generation** — Tools like OpenAPI codegen produce cleaner client SDKs when the response shape is predictable.
+
+**Industry examples:** Stripe (`{ data, has_more }`), GitHub (`data` + `Link` headers), Twilio (`{ data, meta }`), AWS (`{ result, metadata }`).
+
+---
+
+## 13. Schema Validation with Zod (Input Boundary Protection)
+
+**Pattern:** Every piece of external input is validated through a typed schema before reaching business logic.
+
+**Implementation:**
+
+```
+Client Request → Controller (parse query params) → Service (validate body via Zod) → Repository
+                                                         ↓ (if invalid)
+                                                   ValidationException (422)
+                                                         ↓
+                                              { error: { message: "price: Price must be > 0", statusCode: 422 } }
+```
+
+**Why this matters at scale:**
+
+- **Defense in depth** — Services validate regardless of caller (HTTP, cron, queue consumer, internal call). No unprotected entry point.
+- **Type narrowing** — After `validate(schema, data)`, TypeScript knows the exact shape. No `as any`, no runtime type errors downstream.
+- **Field-level error messages** — Clients get `"price: Price must be greater than 0"` instead of generic `"Bad request"`. Reduces support tickets.
+- **Schema as documentation** — Zod schemas are the single source of truth for what the API accepts. They can auto-generate OpenAPI specs.
+- **Strips unknown fields** — Zod's `.parse()` removes fields not in the schema. Prevents mass-assignment attacks (e.g., client sending `{ role: "admin" }`).
+- **Composable** — `UpdateExpenseSchema = CreateExpenseSchema.partial()` — DRY, no duplication.
+
+---
+
+## 14. Response DTOs (Data Transfer Objects)
+
+**Pattern:** Mapper functions sit between the database layer and the API response, controlling exactly which fields leave the server.
+
+```
+Database (Prisma) → Raw Entity (all fields) → DTO Mapper → Response (safe fields only)
+```
+
+**Why this matters at scale:**
+
+- **Security** — Sensitive fields (password hashes, internal IDs, soft-delete flags) never reach the client. Even if a developer forgets, the mapper blocks it.
+- **API stability** — Database schema changes (rename column, add internal field) don't break the API contract. The mapper absorbs internal changes.
+- **Versioning** — When you need API v2 with a different response shape, create a new mapper. Same DB, different output.
+- **Date formatting** — Database returns `Date` objects. DTOs convert to ISO strings consistently. No timezone bugs on the client.
+- **Decoupling** — Frontend team codes against the DTO type. Backend team changes the DB freely. The mapper is the contract boundary.
+
+**File structure:**
+```
+src/lib/dto/
+├── index.ts          ← barrel export
+├── expense.dto.ts    ← toExpenseDto() — excludes categoryId (redundant with nested category)
+├── category.dto.ts   ← toCategoryDto() — only id + name
+└── user.dto.ts       ← toUserDto() — NEVER includes password
+```
