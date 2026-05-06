@@ -6,7 +6,7 @@ The purpose of this application is **not** to build a complex product — it's t
 
 I deliberately chose a simple domain (expense tracking) so the architecture decisions are easy to understand without getting lost in complex business logic. The focus is on **how** the system is built, not **what** it does.
 
-Every pattern here — layered architecture, schema validation, response envelopes, distributed tracing, DTOs — is the same approach used in production services handling millions of requests at companies like Stripe, Shopify, and Ritchie Bros.
+Every pattern here — layered architecture, schema validation, response envelopes, distributed tracing, DTOs — is the same approach used in production services handling millions of requests at companies like Stripe, Shopify, and AWS.
 
 ---
 
