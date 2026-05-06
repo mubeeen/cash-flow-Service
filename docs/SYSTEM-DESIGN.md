@@ -392,3 +392,29 @@ Client → Middleware (generate/passthrough ID) → Controller → Service → R
 - **Cross-service tracing** — When Service A calls Service B, it forwards the `X-Request-Id`. The entire distributed transaction is linked by one ID.
 - **Client-provided IDs** — Mobile apps or frontend can generate their own ID before sending the request. If the request fails mid-flight, they can retry with the same ID for idempotency tracking.
 - **Audit trail** — Every action in the system is traceable to a specific request, user, and timestamp.
+
+---
+
+## 18. Graceful Shutdown
+
+**Pattern:** Intercept `SIGTERM`/`SIGINT` signals, flush all buffers, close connections, then exit cleanly.
+
+**Shutdown sequence:**
+```
+SIGTERM received
+    → Log "shutdown signal received"
+    → Flush OpenTelemetry traces (so no data is lost)
+    → Disconnect Prisma (close DB connection pool)
+    → Log "shutdown complete"
+    → process.exit(0)
+```
+
+**Why this matters at scale:**
+
+- **No dropped requests** — Without graceful shutdown, in-flight requests get killed mid-response. Users see broken pages or partial data.
+- **No lost telemetry** — OpenTelemetry buffers traces in memory. If the process dies without flushing, the last N seconds of traces vanish — exactly when you need them most (during a crash).
+- **No connection leaks** — Orphaned DB connections exhaust the pool. Other instances can't connect. Cascading failure.
+- **Kubernetes rolling deploys** — K8s sends SIGTERM, waits `terminationGracePeriodSeconds` (default 30s), then force-kills. Your app uses that window to drain cleanly.
+- **Docker stop** — Same pattern. `docker stop` sends SIGTERM first, waits 10s, then SIGKILL.
+
+**Without graceful shutdown:** Deploy = brief outage. With it: zero-downtime deploys.
