@@ -1,16 +1,8 @@
 import { ExpenseService } from './expense.service';
 import { withSpan } from '@/lib/tracing';
-import { HttpException } from '@/lib/exceptions';
 import { validate, ExpenseQuerySchema } from '@/lib/validators';
 import { toExpenseDto } from '@/lib/dto';
-import { apiSuccess, apiPaginated, apiError } from '@/lib/response';
-
-function handleError(error: unknown) {
-  if (error instanceof HttpException) {
-    return apiError(error.message, error.statusCode);
-  }
-  return apiError('Internal server error', 500);
-}
+import { apiSuccess, apiPaginated, handleError } from '@/lib/response';
 
 export class ExpenseController {
   static async getAll(request: Request) {

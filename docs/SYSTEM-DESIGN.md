@@ -353,3 +353,42 @@ src/lib/dto/
 - **CI/CD pipelines** — wait for `/api/ready` before running integration tests against a freshly deployed instance.
 - **Docker Compose** — `healthcheck` ensures dependent services wait for the app to be truly ready, not just "port is open."
 - **Zero-downtime deploys** — new instance only receives traffic after readiness passes. Old instance drains existing requests.
+
+---
+
+## 16. Structured Logging (Pino)
+
+**Pattern:** All application logs are JSON with consistent fields — level, timestamp, service name, error context.
+
+**Output example:**
+```json
+{"level":"warn","time":"2026-05-06T16:07:09.806Z","name":"expense-tracker","statusCode":409,"msg":"Email already registered","err":{"type":"ConflictException","stack":"..."}}
+```
+
+**Why this matters at scale:**
+
+- **Machine-parseable** — Log aggregators (Datadog, ELK, CloudWatch) can index, filter, and alert on JSON fields. `console.log("error happened")` is useless at scale.
+- **Log levels** — `error` pages on-call. `warn` goes to dashboards. `info` is for auditing. `debug` is for local dev. One config change controls verbosity per environment.
+- **Error context** — Stack traces, status codes, and exception types are structured fields — not buried in a string you have to regex-parse.
+- **Correlation** — Every log line can include `requestId` and `traceId`, connecting logs to traces to the specific user request.
+
+---
+
+## 17. Request ID (Correlation)
+
+**Pattern:** Every incoming request gets a unique `X-Request-Id` header. If the client provides one, we use it. Otherwise we generate a UUID.
+
+**Flow:**
+```
+Client → Middleware (generate/passthrough ID) → Controller → Service → Repository
+                ↓                                    ↓           ↓
+         Response header                          Logs        Traces
+         X-Request-Id: abc-123                  requestId   span attribute
+```
+
+**Why this matters at scale:**
+
+- **Debug any request** — User reports "I got an error." Support asks for the request ID from the response header. Engineer searches logs/traces by that ID. Instant root cause.
+- **Cross-service tracing** — When Service A calls Service B, it forwards the `X-Request-Id`. The entire distributed transaction is linked by one ID.
+- **Client-provided IDs** — Mobile apps or frontend can generate their own ID before sending the request. If the request fails mid-flight, they can retry with the same ID for idempotency tracking.
+- **Audit trail** — Every action in the system is traceable to a specific request, user, and timestamp.

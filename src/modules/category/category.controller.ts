@@ -1,15 +1,7 @@
 import { CategoryService } from './category.service';
 import { withSpan } from '@/lib/tracing';
-import { HttpException } from '@/lib/exceptions';
 import { toCategoryDto } from '@/lib/dto';
-import { apiSuccess, apiError } from '@/lib/response';
-
-function handleError(error: unknown) {
-  if (error instanceof HttpException) {
-    return apiError(error.message, error.statusCode);
-  }
-  return apiError('Internal server error', 500);
-}
+import { apiSuccess, handleError } from '@/lib/response';
 
 export class CategoryController {
   static async getAll() {

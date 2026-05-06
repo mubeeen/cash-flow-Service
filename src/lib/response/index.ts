@@ -18,3 +18,5 @@ export function apiPaginated<T>(data: T[], meta: PaginationMeta) {
 export function apiError(message: string, statusCode: number) {
   return NextResponse.json({ error: { message, statusCode } }, { status: statusCode });
 }
+
+export { handleError } from './handle-error';

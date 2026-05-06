@@ -1,17 +1,8 @@
-import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { AuthService } from './auth.service';
 import { withSpan } from '@/lib/tracing';
-import { HttpException } from '@/lib/exceptions';
 import { toUserDto } from '@/lib/dto';
-import { apiSuccess, apiError } from '@/lib/response';
-
-function handleError(error: unknown) {
-  if (error instanceof HttpException) {
-    return apiError(error.message, error.statusCode);
-  }
-  return apiError('Internal server error', 500);
-}
+import { apiSuccess, handleError } from '@/lib/response';
 
 export class AuthController {
   static async register(request: Request) {
