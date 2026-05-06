@@ -66,13 +66,13 @@ describe('POST /api/expenses', () => {
     expect(response.status).toBe(201);
   });
 
-  it('returns 400 when fields are missing', async () => {
+  it('returns 422 when fields are missing', async () => {
     const request = new Request('http://localhost/api/expenses', {
       method: 'POST',
       body: JSON.stringify(invalidCreateExpenseInput),
     });
 
     const response = await POST(request);
-    expect(response.status).toBe(400);
+    expect(response.status).toBe(422);
   });
 });

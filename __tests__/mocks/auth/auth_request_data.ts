@@ -1,7 +1,7 @@
 export const validRegisterInput = {
   name: 'Test User',
   email: 'test@test.com',
-  password: '123456',
+  password: '12345678',
 };
 
 export const invalidRegisterInput = {
@@ -11,15 +11,15 @@ export const invalidRegisterInput = {
 
 export const validLoginInput = {
   email: 'test@test.com',
-  password: '123456',
+  password: '12345678',
 };
 
 export const wrongEmailLoginInput = {
   email: 'wrong@test.com',
-  password: '123456',
+  password: '12345678',
 };
 
 export const wrongPasswordLoginInput = {
   email: 'test@test.com',
-  password: 'wrong',
+  password: 'wrongpass',
 };

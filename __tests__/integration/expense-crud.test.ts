@@ -14,7 +14,13 @@ jest.mock('@/lib/db', () => {
         findMany: jest.fn(() => Promise.resolve([...expenses])),
         findUnique: jest.fn(({ where }) => Promise.resolve(expenses.find((e) => e.id === where.id) || null)),
         create: jest.fn(({ data }) => {
-          const expense = { id: String(idCounter++), ...data, createdAt: new Date(), category: { id: data.categoryId, name: 'Food' } };
+          const expense = {
+            id: String(idCounter++),
+            ...data,
+            date: new Date(data.date),
+            createdAt: new Date(),
+            category: { id: data.categoryId, name: 'Food' },
+          };
           expenses.push(expense);
           return Promise.resolve(expense);
         }),

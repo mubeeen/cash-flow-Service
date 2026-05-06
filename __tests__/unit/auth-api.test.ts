@@ -39,7 +39,7 @@ describe('POST /api/auth/register', () => {
 
     const response = await register(request);
     expect(response.status).toBe(201);
-    expect(bcrypt.hash).toHaveBeenCalledWith('123456', 10);
+    expect(bcrypt.hash).toHaveBeenCalledWith('12345678', 10);
   });
 
   it('returns 409 if email exists', async () => {
@@ -56,14 +56,14 @@ describe('POST /api/auth/register', () => {
     expect(data.error).toBe('Email already registered');
   });
 
-  it('returns 400 if fields missing', async () => {
+  it('returns 422 if fields missing', async () => {
     const request = new Request('http://localhost/api/auth/register', {
       method: 'POST',
       body: JSON.stringify(invalidRegisterInput),
     });
 
     const response = await register(request);
-    expect(response.status).toBe(400);
+    expect(response.status).toBe(422);
   });
 });
 
