@@ -1,0 +1,237 @@
+# System Design Document — Expense Tracker
+
+## Overview
+
+This application is designed as a **scalable, enterprise-grade Node/TypeScript service** following industry-standard patterns used in production microservices at companies like Stripe, Shopify, and Ritchie Bros.
+
+The architecture prioritizes: **maintainability**, **testability**, **observability**, and **horizontal scalability**.
+
+---
+
+## 1. Layered Architecture (Separation of Concerns)
+
+**Pattern:** Controller → Service → Repository
+
+**Why this matters at scale:**
+
+- **Controller** — Handles HTTP concerns only (request parsing, response formatting). If we switch from REST to GraphQL or gRPC tomorrow, only this layer changes.
+- **Service** — Contains all business logic. It doesn't know about HTTP, databases, or frameworks. This means the same business rules work whether called from an API endpoint, a cron job, or a message queue consumer.
+- **Repository** — Abstracts data access. If we migrate from PostgreSQL to DynamoDB, or add a Redis cache layer, only repositories change. Business logic remains untouched.
+
+**Scalability impact:** Each layer can be independently tested, replaced, or scaled. Teams can work on different layers without conflicts.
+
+---
+
+## 2. Custom Exception Hierarchy
+
+**Pattern:** Typed error classes with HTTP semantics
+
+```
+HttpException (base)
+├── BusinessException (4xx — client's fault)
+│   ├── BadRequestException (400)
+│   ├── UnauthorizedException (401)
+│   ├── ForbiddenException (403)
+│   ├── NotFoundException (404)
+│   ├── ConflictException (409)
+│   └── ValidationException (422)
+└── ServerException (5xx — our fault)
+    ├── InternalServerException (500)
+    └── ServiceUnavailableException (503)
+```
+
+**Why this matters at scale:**
+
+- **Consistent error contracts** — Every API consumer gets predictable error shapes. Frontend teams, mobile teams, and third-party integrators all know what to expect.
+- **Operational clarity** — 4xx errors don't page on-call engineers. 5xx errors do. This distinction drives alerting, SLOs, and dashboards.
+- **Error propagation** — In a microservice mesh, typed exceptions let upstream services decide whether to retry (503) or fail fast (400).
+
+---
+
+## 3. Schema Validation at Service Boundary
+
+**Pattern:** Zod schemas validate all input before business logic executes
+
+**Why this matters at scale:**
+
+- **Defense in depth** — Never trust input from any source (API, queue, internal call). Validation at the service layer means the system is protected regardless of entry point.
+- **Type narrowing** — After validation, TypeScript knows the exact shape of data. No more `as any` or runtime surprises.
+- **API contract enforcement** — Schemas serve as living documentation of what the API accepts. They can auto-generate OpenAPI specs.
+- **Fail fast** — Invalid data is rejected immediately with field-level error messages, before hitting the database or triggering side effects.
+
+---
+
+## 4. Distributed Tracing (OpenTelemetry)
+
+**Pattern:** Every operation wrapped in spans with typed attributes
+
+**Why this matters at scale:**
+
+- **Request lifecycle visibility** — A single user request flows through Controller → Service → Repository → Database. Tracing shows exactly where time is spent.
+- **Cross-service correlation** — When this service calls Payment or Notification services, trace context propagates automatically. One trace ID connects the entire distributed transaction.
+- **Performance debugging** — "Why is GET /expenses slow?" Tracing shows it's the DB query taking 800ms, not the business logic. Without tracing, you're guessing.
+- **SLO measurement** — Traces feed into SLO calculations (e.g., "99.9% of requests complete under 2 seconds").
+
+**Scalability impact:** As you add more services, tracing is the only way to understand system behavior. Logs alone don't show causality across services.
+
+---
+
+## 5. Database Design (PostgreSQL + Prisma)
+
+**Pattern:** Relational schema with migrations, connection pooling, and ORM abstraction
+
+**Why this matters at scale:**
+
+- **Migrations as code** — Every schema change is versioned, reviewable, and reproducible across environments (dev → staging → prod). No manual DDL.
+- **Connection pooling** — Prisma manages a connection pool. Under load, 100 concurrent requests share 10 DB connections instead of each opening their own.
+- **UUID primary keys** — No auto-increment conflicts in distributed systems. UUIDs can be generated client-side, enabling offline-first patterns and reducing DB round-trips.
+- **Referential integrity** — Foreign keys (Expense → Category) enforce data consistency at the database level, not just application level.
+
+**Horizontal scaling path:** Add read replicas for query-heavy workloads. Prisma supports read/write splitting with minimal code changes.
+
+---
+
+## 6. Authentication & Session Management
+
+**Pattern:** Stateless cookie-based sessions with middleware protection
+
+**Why this matters at scale:**
+
+- **Middleware pattern** — Auth check runs before any route handler. Adding new protected routes requires zero auth code — just add to the matcher config.
+- **Stateless sessions** — Session data lives in a signed cookie, not server memory. Any instance can handle any request — critical for horizontal scaling behind a load balancer.
+- **Password hashing (bcrypt)** — Industry-standard adaptive hashing. Cost factor can increase as hardware improves without changing stored hashes.
+
+**Scalability impact:** No sticky sessions needed. Load balancer can round-robin freely across N instances.
+
+---
+
+## 7. Containerization (Docker + Compose)
+
+**Pattern:** Multi-service local development environment matching production topology
+
+**Why this matters at scale:**
+
+- **Environment parity** — Dev runs the same PostgreSQL, Grafana, and Tempo that production uses. "Works on my machine" is eliminated.
+- **Reproducible builds** — `Dockerfile` produces identical artifacts regardless of developer's OS or installed tools.
+- **Service isolation** — Each service (app, DB, tracing) runs in its own container with defined resource limits and network boundaries.
+- **Kubernetes-ready** — The same Docker image deploys to K8s with Helm charts. Container is the deployment unit.
+
+**Production path:** Add health checks, resource limits, and multi-stage builds for smaller images.
+
+---
+
+## 8. Modular Domain Organization
+
+**Pattern:** Feature modules with co-located controller/service/repository
+
+```
+src/modules/
+├── auth/        (authentication bounded context)
+├── category/    (category management)
+└── expense/     (expense tracking — core domain)
+```
+
+**Why this matters at scale:**
+
+- **Team ownership** — Each module can be owned by a different team. Clear boundaries prevent coupling.
+- **Microservice extraction** — When expense tracking needs its own deployment, you extract the `expense/` module into a separate service. The boundaries are already defined.
+- **Cognitive load** — New developers understand one module without reading the entire codebase.
+- **Independent deployability** — Changes to auth don't require testing expense logic (when properly decoupled).
+
+---
+
+## 9. Testing Strategy (Multi-Layer)
+
+**Pattern:** Test pyramid — unit → component → integration
+
+**Why this matters at scale:**
+
+- **Unit tests** — Fast, isolated, test business logic without DB or HTTP. Run in milliseconds. Catch logic bugs.
+- **Component tests** — Test UI components in isolation with mocked data. Catch rendering bugs.
+- **Integration tests** — Test full request flow (HTTP → Controller → Service → Repository → DB). Catch wiring bugs.
+
+**Scalability impact:** Fast unit tests run on every commit (seconds). Slow integration tests run on PR merge (minutes). This keeps CI fast while maintaining confidence.
+
+**Enterprise additions (future):** Contract tests (Pact) verify service-to-service compatibility. Load tests (K6) verify performance under stress.
+
+---
+
+## 10. Observability Stack (Grafana + Tempo)
+
+**Pattern:** Traces exported to Tempo, visualized in Grafana
+
+**Why this matters at scale:**
+
+- **Three pillars** — Enterprise observability requires Logs + Metrics + Traces. We have traces; logs and metrics are next.
+- **Vendor-agnostic** — OpenTelemetry is the CNCF standard. Switch from Tempo to Honeycomb, Datadog, or Jaeger by changing one exporter config.
+- **Cost control** — Sampling strategies let you trace 100% in dev but 10% in prod, controlling storage costs while maintaining visibility.
+
+---
+
+## 11. Environment & Configuration Management
+
+**Pattern:** Validated environment variables with fail-fast startup
+
+**Why this matters at scale:**
+
+- **Fail fast** — If `DATABASE_URL` is missing, the app crashes immediately on startup with a clear error — not 5 minutes later when the first DB query runs.
+- **Type-safe config** — `env.DATABASE_URL` is typed, not `process.env.DATABASE_URL` which is `string | undefined`.
+- **Environment separation** — Same code runs in dev/staging/prod with different configs. No code changes for deployment.
+
+---
+
+## Architecture Diagram
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                      Client (Browser)                     │
+└─────────────────────────┬───────────────────────────────┘
+                          │ HTTPS
+┌─────────────────────────▼───────────────────────────────┐
+│                   Next.js Middleware                      │
+│              (Auth check, session validation)             │
+└─────────────────────────┬───────────────────────────────┘
+                          │
+┌─────────────────────────▼───────────────────────────────┐
+│                     API Routes                            │
+│            /api/auth  /api/expenses  /api/categories     │
+└─────────────────────────┬───────────────────────────────┘
+                          │
+┌─────────────────────────▼───────────────────────────────┐
+│                    Controllers                            │
+│         (HTTP parsing, response formatting)               │
+└─────────────────────────┬───────────────────────────────┘
+                          │
+┌─────────────────────────▼───────────────────────────────┐
+│                     Services                              │
+│     (Business logic, validation, orchestration)           │
+└─────────────────────────┬───────────────────────────────┘
+                          │
+┌─────────────────────────▼───────────────────────────────┐
+│                   Repositories                            │
+│            (Data access abstraction)                      │
+└─────────────────────────┬───────────────────────────────┘
+                          │
+┌─────────────────────────▼───────────────────────────────┐
+│              PostgreSQL (via Prisma ORM)                  │
+└─────────────────────────────────────────────────────────┘
+
+         ┌──────────────────────────────────┐
+         │     OpenTelemetry Collector       │
+         │    (Traces → Tempo → Grafana)     │
+         └──────────────────────────────────┘
+```
+
+---
+
+## Scalability Roadmap
+
+| Current State | Next Step | Enterprise Target |
+|---------------|-----------|-------------------|
+| Single instance | Horizontal scaling (multiple containers) | Auto-scaling (K8s HPA) |
+| Direct DB calls | Connection pooling (PgBouncer) | Read replicas + write splitting |
+| Synchronous only | Background jobs (BullMQ) | Event-driven (Kafka/SQS) |
+| Cookie sessions | JWT tokens | OAuth2 + API keys |
+| Single service | Module extraction | Microservice mesh |
+| Manual deploys | CI/CD pipeline | GitOps (ArgoCD) |
+| Traces only | + Structured logging | + Metrics + SLOs + Alerting |
