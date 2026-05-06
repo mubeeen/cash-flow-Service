@@ -1,15 +1,15 @@
-import { NextResponse } from 'next/server';
 import { ExpenseService } from './expense.service';
 import { withSpan } from '@/lib/tracing';
 import { HttpException } from '@/lib/exceptions';
 import { validate, ExpenseQuerySchema } from '@/lib/validators';
 import { toExpenseDto } from '@/lib/dto';
+import { apiSuccess, apiPaginated, apiError } from '@/lib/response';
 
 function handleError(error: unknown) {
   if (error instanceof HttpException) {
-    return NextResponse.json({ error: error.message }, { status: error.statusCode });
+    return apiError(error.message, error.statusCode);
   }
-  return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  return apiError('Internal server error', 500);
 }
 
 export class ExpenseController {
@@ -19,9 +19,11 @@ export class ExpenseController {
         const { searchParams } = new URL(request.url);
         const query = validate(ExpenseQuerySchema, Object.fromEntries(searchParams));
         const result = await ExpenseService.findAll(query.search, query.category, query.page, query.limit);
-        return NextResponse.json({
-          ...result,
-          expenses: result.expenses.map(toExpenseDto),
+        return apiPaginated(result.expenses.map(toExpenseDto), {
+          page: result.page,
+          limit: query.limit,
+          total: result.total,
+          totalPages: result.totalPages,
         });
       } catch (error) {
         return handleError(error);
@@ -33,7 +35,7 @@ export class ExpenseController {
     return withSpan('ExpenseController.getOne', async () => {
       try {
         const expense = await ExpenseService.findById(id);
-        return NextResponse.json(toExpenseDto(expense));
+        return apiSuccess(toExpenseDto(expense));
       } catch (error) {
         return handleError(error);
       }
@@ -45,7 +47,7 @@ export class ExpenseController {
       try {
         const body = await request.json();
         const expense = await ExpenseService.create(body);
-        return NextResponse.json(toExpenseDto(expense), { status: 201 });
+        return apiSuccess(toExpenseDto(expense), 201);
       } catch (error) {
         return handleError(error);
       }
@@ -57,7 +59,7 @@ export class ExpenseController {
       try {
         const body = await request.json();
         const expense = await ExpenseService.update(id, body);
-        return NextResponse.json(toExpenseDto(expense));
+        return apiSuccess(toExpenseDto(expense));
       } catch (error) {
         return handleError(error);
       }
@@ -68,7 +70,7 @@ export class ExpenseController {
     return withSpan('ExpenseController.delete', async () => {
       try {
         await ExpenseService.delete(id);
-        return NextResponse.json({ message: 'Deleted' });
+        return apiSuccess({ message: 'Deleted' });
       } catch (error) {
         return handleError(error);
       }

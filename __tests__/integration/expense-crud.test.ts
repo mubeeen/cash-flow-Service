@@ -1,7 +1,6 @@
 /**
  * @jest-environment node
  */
-import type { Expense } from '@/lib/types';
 import { validCreateExpenseInput, validUpdateExpenseInput } from '../mocks/expense/expense_request_data';
 
 jest.mock('@/lib/db', () => {
@@ -50,34 +49,36 @@ describe('Expense CRUD Integration', () => {
     const createRes = await POST(new Request('http://localhost/api/expenses', {
       method: 'POST', body: JSON.stringify(validCreateExpenseInput),
     }));
-    const created: Expense = await createRes.json();
+    const createBody = await createRes.json();
     expect(createRes.status).toBe(201);
-    expect(created.item).toBe('Coffee');
+    expect(createBody.data.item).toBe('Coffee');
+
+    const id = createBody.data.id;
 
     // READ ALL
     const listRes = await GET(new Request('http://localhost/api/expenses?page=1&limit=10'));
-    const listData: { expenses: Expense[] } = await listRes.json();
-    expect(listData.expenses).toHaveLength(1);
+    const listBody = await listRes.json();
+    expect(listBody.data).toHaveLength(1);
 
     // READ ONE
-    const getRes = await GET_ONE(new Request(`http://localhost/api/expenses/${created.id}`), { params: { id: created.id } });
-    const fetched: Expense = await getRes.json();
-    expect(fetched.item).toBe('Coffee');
+    const getRes = await GET_ONE(new Request(`http://localhost/api/expenses/${id}`), { params: { id } });
+    const getBody = await getRes.json();
+    expect(getBody.data.item).toBe('Coffee');
 
     // UPDATE
-    const updateRes = await PATCH(new Request(`http://localhost/api/expenses/${created.id}`, {
+    const updateRes = await PATCH(new Request(`http://localhost/api/expenses/${id}`, {
       method: 'PATCH', body: JSON.stringify(validUpdateExpenseInput),
-    }), { params: { id: created.id } });
-    const updated: Expense = await updateRes.json();
-    expect(updated.item).toBe('Latte');
+    }), { params: { id } });
+    const updateBody = await updateRes.json();
+    expect(updateBody.data.item).toBe('Latte');
 
     // DELETE
-    const deleteRes = await DELETE(new Request(`http://localhost/api/expenses/${created.id}`), { params: { id: created.id } });
+    const deleteRes = await DELETE(new Request(`http://localhost/api/expenses/${id}`), { params: { id } });
     expect(deleteRes.status).toBe(200);
 
     // VERIFY DELETED
     const finalRes = await GET(new Request('http://localhost/api/expenses?page=1&limit=10'));
-    const finalData: { expenses: Expense[] } = await finalRes.json();
-    expect(finalData.expenses).toHaveLength(0);
+    const finalBody = await finalRes.json();
+    expect(finalBody.data).toHaveLength(0);
   });
 });

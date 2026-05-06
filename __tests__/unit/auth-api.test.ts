@@ -1,7 +1,6 @@
 /**
  * @jest-environment node
  */
-import type { ApiError } from '@/lib/types';
 import { existingUser } from '../mocks/auth/auth_response_data';
 import { validRegisterInput, invalidRegisterInput, validLoginInput, wrongPasswordLoginInput } from '../mocks/auth/auth_request_data';
 
@@ -51,9 +50,9 @@ describe('POST /api/auth/register', () => {
     });
 
     const response = await register(request);
-    const data: ApiError = await response.json();
+    const body = await response.json();
     expect(response.status).toBe(409);
-    expect(data.error).toBe('Email already registered');
+    expect(body.error.message).toBe('Email already registered');
   });
 
   it('returns 422 if fields missing', async () => {

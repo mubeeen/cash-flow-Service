@@ -2,7 +2,6 @@
  * @jest-environment node
  */
 import { prisma } from '@/lib/db';
-import type { Expense } from '@/lib/types';
 import { singleExpense } from '../mocks/expense/expense_response_data';
 import { validCreateExpenseInput, invalidCreateExpenseInput } from '../mocks/expense/expense_request_data';
 
@@ -28,12 +27,12 @@ describe('GET /api/expenses', () => {
 
     const request = new Request('http://localhost/api/expenses?page=1&limit=5');
     const response = await GET(request);
-    const data: { expenses: Expense[]; total: number } = await response.json();
+    const body = await response.json();
 
     expect(response.status).toBe(200);
-    expect(data.expenses).toHaveLength(1);
-    expect(data.expenses[0].item).toBe('Coffee');
-    expect(data.total).toBe(1);
+    expect(body.data).toHaveLength(1);
+    expect(body.data[0].item).toBe('Coffee');
+    expect(body.meta.total).toBe(1);
   });
 
   it('filters by search term', async () => {

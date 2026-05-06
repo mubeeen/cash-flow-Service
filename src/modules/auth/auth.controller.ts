@@ -4,12 +4,13 @@ import { AuthService } from './auth.service';
 import { withSpan } from '@/lib/tracing';
 import { HttpException } from '@/lib/exceptions';
 import { toUserDto } from '@/lib/dto';
+import { apiSuccess, apiError } from '@/lib/response';
 
 function handleError(error: unknown) {
   if (error instanceof HttpException) {
-    return NextResponse.json({ error: error.message }, { status: error.statusCode });
+    return apiError(error.message, error.statusCode);
   }
-  return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  return apiError('Internal server error', 500);
 }
 
 export class AuthController {
@@ -18,7 +19,7 @@ export class AuthController {
       try {
         const body = await request.json();
         const user = await AuthService.register(body);
-        return NextResponse.json(toUserDto(user), { status: 201 });
+        return apiSuccess(toUserDto(user), 201);
       } catch (error) {
         return handleError(error);
       }
@@ -37,7 +38,7 @@ export class AuthController {
           maxAge: 60 * 60 * 24 * 7,
         });
 
-        return NextResponse.json(toUserDto(user));
+        return apiSuccess(toUserDto(user));
       } catch (error) {
         return handleError(error);
       }
@@ -47,7 +48,7 @@ export class AuthController {
   static async logout() {
     return withSpan('AuthController.logout', async () => {
       cookies().delete('session');
-      return NextResponse.json({ message: 'Logged out' });
+      return apiSuccess({ message: 'Logged out' });
     });
   }
 }
