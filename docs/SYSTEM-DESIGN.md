@@ -326,3 +326,30 @@ src/lib/dto/
 ├── category.dto.ts   ← toCategoryDto() — only id + name
 └── user.dto.ts       ← toUserDto() — NEVER includes password
 ```
+
+---
+
+## 15. Health Check Endpoints (Liveness & Readiness Probes)
+
+**Pattern:** Two separate endpoints that distinguish "is the process alive?" from "can it serve traffic?"
+
+**Endpoints:**
+
+| Endpoint | Type | Checks | Healthy | Unhealthy |
+|----------|------|--------|---------|-----------|
+| `GET /api/health` | Liveness | Process is running | `200 { status: "ok" }` | Never fails if server is up |
+| `GET /api/ready` | Readiness | Database connectivity | `200 { database: "connected" }` | `503 { database: "disconnected" }` |
+
+**Why two endpoints, not one:**
+
+- App is alive but DB is down → **stop sending traffic** (readiness fails), but **don't restart** (liveness still passes). The DB might recover in seconds.
+- App process crashed → **restart it** (liveness fails).
+- Combining both into one endpoint means a DB blip causes unnecessary container restarts, which makes the outage worse.
+
+**Why this matters at scale:**
+
+- **Load balancers** (ALB, Nginx, K8s Service) — remove unhealthy instances from rotation automatically. Users never see a 503.
+- **Kubernetes** — `livenessProbe` → restart pod. `readinessProbe` → remove from Service endpoints. Different actions for different failures.
+- **CI/CD pipelines** — wait for `/api/ready` before running integration tests against a freshly deployed instance.
+- **Docker Compose** — `healthcheck` ensures dependent services wait for the app to be truly ready, not just "port is open."
+- **Zero-downtime deploys** — new instance only receives traffic after readiness passes. Old instance drains existing requests.
