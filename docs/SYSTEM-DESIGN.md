@@ -594,3 +594,34 @@ docker-compose.yml     ← separate "migrate" service runs first
 - **Rollback safety** — If migration fails, the app never starts. You fix the migration and retry. No half-migrated DB serving traffic.
 - **CI/CD integration** — Migration runs as a pipeline step: `migrate → smoke test → deploy app`. If migration fails, deploy is aborted.
 - **Kubernetes pattern** — Run migration as a `Job` (one-time), then deploy the app as a `Deployment` (many replicas). Same pattern used at Ritchie Bros and most enterprise K8s deployments.
+
+---
+
+## 25. Config Management (Per-Environment)
+
+**Pattern:** Separate configuration files per environment, with a centralized config module that all code reads from.
+
+**File structure:**
+```
+.env.development         ← local dev (committed — safe defaults)
+.env.test                ← test environment (committed)
+.env.production.example  ← production template (committed — no secrets)
+.env                     ← actual runtime values (gitignored)
+src/lib/config/index.ts  ← typed config module (single source of truth)
+```
+
+**Config module provides:**
+```ts
+config.db.url            // DATABASE_URL
+config.log.level         // LOG_LEVEL (debug/info/warn)
+config.rateLimit.max     // RATE_LIMIT_MAX (1000 in dev, 100 in prod)
+config.otel.endpoint     // OTEL_EXPORTER_OTLP_ENDPOINT
+```
+
+**Why this matters at scale:**
+
+- **No hardcoded values** — Every tunable setting lives in config, not scattered across source files.
+- **Environment parity** — Same code, different config. Dev is relaxed (debug logs, high rate limits). Prod is strict (warn logs, tight limits).
+- **Safe secrets** — `.env` is gitignored. Production secrets are injected by CI/CD or Vault — never committed.
+- **Single import** — All code reads `config.x.y` instead of `process.env.X` everywhere. One place to see all settings.
+- **Fail fast** — `validateEnv()` crashes on startup if required vars are missing. No runtime surprises 5 minutes into serving traffic.

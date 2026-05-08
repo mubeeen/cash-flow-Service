@@ -1,4 +1,5 @@
 import { logger } from '@/lib/logger';
+import { config } from '@/lib/config';
 
 export async function register() {
   if (process.env.NEXT_RUNTIME === 'nodejs') {
@@ -10,7 +11,7 @@ export async function register() {
     const sdk = new NodeSDK({
       serviceName: 'expense-tracker',
       traceExporter: new OTLPTraceExporter({
-        url: process.env.OTEL_EXPORTER_OTLP_ENDPOINT || 'http://localhost:4318/v1/traces',
+        url: config.otel.endpoint,
       }),
       instrumentations: [getNodeAutoInstrumentations()],
     });

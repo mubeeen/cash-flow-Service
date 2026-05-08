@@ -1,6 +1,11 @@
 /**
  * @jest-environment node
  */
+
+jest.mock('@/lib/config', () => ({
+  config: { rateLimit: { max: 100 } },
+}));
+
 import { rateLimit } from '@/lib/rate-limit';
 
 describe('Rate Limiter', () => {

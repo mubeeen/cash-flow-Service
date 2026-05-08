@@ -1,3 +1,5 @@
+import { config } from '@/lib/config';
+
 type RateLimitEntry = {
   count: number;
   resetTime: number;
@@ -13,7 +15,7 @@ type RateLimitResult = {
 const store = new Map<string, RateLimitEntry>();
 
 const WINDOW_MS = 15 * 60 * 1000; // 15 minutes
-const MAX_REQUESTS = 100;          // per window
+const MAX_REQUESTS = config.rateLimit.max;
 
 export function rateLimit(ip: string): RateLimitResult {
   const now = Date.now();

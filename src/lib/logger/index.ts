@@ -1,8 +1,9 @@
 import pino from 'pino';
+import { config } from '@/lib/config';
 
 export const logger = pino({
   name: 'expense-tracker',
-  level: process.env.LOG_LEVEL || 'info',
+  level: config.log.level,
   formatters: {
     level(label) {
       return { level: label };
