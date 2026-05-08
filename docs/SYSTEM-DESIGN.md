@@ -493,3 +493,27 @@ Retry-After: 45   ← seconds until client can retry
 - **API monetization** — Different tiers (free: 100/hr, pro: 10,000/hr) are built on rate limiting.
 
 **Production upgrade path:** Replace in-memory store with Redis for multi-instance consistency. Same interface, different backend.
+
+---
+
+## 21. Security Headers
+
+**Pattern:** HTTP response headers configured at the framework level that instruct browsers to enable security protections.
+
+**Headers applied to every response:**
+
+| Header | Attack Prevented | Value |
+|--------|-----------------|-------|
+| `X-Content-Type-Options` | MIME sniffing (browser executes malicious file as script) | `nosniff` |
+| `X-Frame-Options` | Clickjacking (your site embedded in attacker's iframe) | `DENY` |
+| `X-XSS-Protection` | Reflected XSS in older browsers | `1; mode=block` |
+| `Referrer-Policy` | URL leakage to third-party sites | `strict-origin-when-cross-origin` |
+| `Permissions-Policy` | Unauthorized access to camera/mic/location | `camera=(), microphone=(), geolocation=()` |
+| `Strict-Transport-Security` | HTTPS downgrade attacks (man-in-the-middle) | `max-age=31536000; includeSubDomains` |
+
+**Why this matters at scale:**
+
+- **Zero-code defense** — These headers protect users without any application logic. They're enforced by the browser itself.
+- **Compliance** — Security audits (SOC2, PCI-DSS) require these headers. Without them, you fail automated scans.
+- **Defense in depth** — Even if your code has a bug, these headers limit what an attacker can exploit.
+- **Applied at lowest level** — Configured in `next.config.js`, applied by the server before middleware or route handlers run. Cannot be accidentally skipped.
