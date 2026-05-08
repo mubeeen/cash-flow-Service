@@ -1,6 +1,6 @@
 import type { ExpenseService } from './expense.service';
 import { withSpan } from '@/lib/tracing';
-import { validate, ExpenseQuerySchema } from '@/lib/validators';
+import { validate, ExpenseQuerySchema, type ExpenseQuery } from '@/lib/validators';
 import { toExpenseDto } from '@/lib/dto';
 import { apiSuccess, apiPaginated, handleError } from '@/lib/response';
 
@@ -11,7 +11,13 @@ export class ExpenseController {
     return withSpan('ExpenseController.getAll', async () => {
       try {
         const { searchParams } = new URL(request.url);
-        const query = validate(ExpenseQuerySchema, Object.fromEntries(searchParams));
+        const raw = {
+          search: searchParams.get('search') ?? undefined,
+          category: searchParams.get('category') ?? undefined,
+          page: searchParams.get('page') ?? undefined,
+          limit: searchParams.get('limit') ?? undefined,
+        };
+        const query = validate(ExpenseQuerySchema, raw) as ExpenseQuery;
         const result = await this.service.findAll(query.search, query.category, query.page, query.limit);
         return apiPaginated(result.expenses.map(toExpenseDto), {
           page: result.page,

@@ -21,7 +21,7 @@ export default function EditExpensePage({ params }: { params: { id: string } }) 
     ]).then(([expense, cats]: [Expense, Category[]]) => {
       setItem(expense.item);
       setPrice(String(expense.price));
-      setDate(String(expense.date).split('T')[0]);
+      setDate(String(expense.date).split('T')[0] ?? '');
       setCategoryId(expense.categoryId);
       setCategories(cats);
       setLoading(false);

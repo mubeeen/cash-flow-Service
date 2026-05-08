@@ -1,10 +1,10 @@
-import type { PrismaClient } from '@prisma/client';
+import type { PrismaClient, Prisma } from '@prisma/client';
 import { withSpan } from '@/lib/tracing';
 
 export class ExpenseRepository {
   constructor(private db: PrismaClient) {}
 
-  findAll(where: object, skip: number, take: number) {
+  findAll(where: Prisma.ExpenseWhereInput, skip: number, take: number) {
     return withSpan('ExpenseRepository.findAll', () =>
       this.db.expense.findMany({
         where,
@@ -34,7 +34,7 @@ export class ExpenseRepository {
     );
   }
 
-  update(id: string, data: object) {
+  update(id: string, data: Prisma.ExpenseUpdateInput) {
     return withSpan('ExpenseRepository.update', () =>
       this.db.expense.update({ where: { id }, data }),
     );

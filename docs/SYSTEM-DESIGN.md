@@ -542,3 +542,26 @@ Retry-After: 45   ← seconds until client can retry
 - **Deprecation path** — Announce "v1 sunset in 6 months", monitor usage, then remove. No surprise breakage.
 - **Third-party integrations** — Partners build against a stable version. They migrate on their schedule, not yours.
 - **Independent deployment** — v1 and v2 handlers can coexist in the same codebase or be split into separate services later.
+
+---
+
+## 23. Stricter TypeScript Configuration
+
+**Pattern:** Enable additional compiler flags beyond `strict: true` to catch more bugs at compile time.
+
+**Flags added:**
+
+| Flag | What it catches |
+|------|----------------|
+| `noUncheckedIndexedAccess` | Array/object access that might be `undefined` — forces null checks |
+| `noFallthroughCasesInSwitch` | Missing `break` in switch statements — prevents silent bugs |
+
+**Additionally fixed:**
+- Repository params changed from `object` (accepts anything) to `Prisma.ExpenseWhereInput` / `Prisma.ExpenseUpdateInput` (only valid fields)
+
+**Why this matters at scale:**
+
+- **Shift bugs left** — Every error caught at compile time is one fewer production incident. The compiler is your cheapest QA engineer.
+- **Self-documenting code** — Proper types tell the next developer exactly what a function accepts without reading the implementation.
+- **Refactoring confidence** — Rename a field? The compiler shows every place that needs updating. No runtime surprises.
+- **Onboarding speed** — New team members get instant feedback from the IDE instead of discovering bugs in code review or production.
