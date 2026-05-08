@@ -10,7 +10,9 @@
     "test": "jest",
     "test:unit": "jest __tests__/unit",
     "test:component": "jest __tests__/component",
-    "test:integration": "jest __tests__/integration"
+    "test:integration": "jest __tests__/integration",
+    "test:contract": "jest __tests__/contract",
+    "test:load": "k6 run load-tests/expense-api.js"
   },
   "dependencies": {
     "@opentelemetry/api": "^1.9.1",

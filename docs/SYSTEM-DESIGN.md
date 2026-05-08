@@ -625,3 +625,48 @@ config.otel.endpoint     // OTEL_EXPORTER_OTLP_ENDPOINT
 - **Safe secrets** — `.env` is gitignored. Production secrets are injected by CI/CD or Vault — never committed.
 - **Single import** — All code reads `config.x.y` instead of `process.env.X` everywhere. One place to see all settings.
 - **Fail fast** — `validateEnv()` crashes on startup if required vars are missing. No runtime surprises 5 minutes into serving traffic.
+
+---
+
+## 26. Contract Tests & Load Tests
+
+### Contract Tests
+
+**Pattern:** Tests that verify the API response **shape** (not business logic). They protect consumers from accidental breaking changes.
+
+**What they check:**
+- Response envelope exists (`{ data, meta }`)
+- All required fields are present with correct types
+- Internal fields (password, categoryId) are NOT exposed
+- Dates are ISO strings, not raw Date objects
+
+**When they fail:**
+- Someone renames a field → contract breaks → CI blocks deploy
+- Someone adds `categoryId` to response → "does NOT expose internal fields" fails
+- Someone changes pagination shape → meta contract fails
+
+**Run with:** `npm run test:contract`
+
+### Load Tests (K6)
+
+**Pattern:** Simulate concurrent users to find performance limits before production traffic does.
+
+**Configuration:**
+- 50 virtual users
+- 30 second sustained load
+- Thresholds: avg < 500ms, p95 < 1s, error rate < 1%
+
+**Output example:**
+```
+✓ http_req_duration: avg=45ms, p95=120ms
+✓ http_req_failed: 0.0%
+✓ http_reqs: 1,500 total (50/sec)
+```
+
+**Run with:** `npm run test:load` (requires K6 installed + app running)
+
+**Why this matters at scale:**
+
+- **Contract tests** — Catch breaking API changes before they reach consumers. Run on every CI build.
+- **Load tests** — Know your limits before users find them. Run before major releases.
+- **Capacity planning** — "We handle 400 req/sec per instance. Expected peak is 1,200 req/sec. We need 4 instances."
