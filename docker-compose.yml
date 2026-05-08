@@ -17,6 +17,15 @@ services:
     environment:
       DATABASE_URL: postgresql://postgres:postgres@db:5432/expenseapp
     depends_on:
+      migrate:
+        condition: service_completed_successfully
+
+  migrate:
+    build: .
+    command: ["sh", "scripts/migrate.sh"]
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/expenseapp
+    depends_on:
       - db
 
   tempo:

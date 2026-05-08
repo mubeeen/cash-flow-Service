@@ -565,3 +565,32 @@ Retry-After: 45   ← seconds until client can retry
 - **Self-documenting code** — Proper types tell the next developer exactly what a function accepts without reading the implementation.
 - **Refactoring confidence** — Rename a field? The compiler shows every place that needs updating. No runtime surprises.
 - **Onboarding speed** — New team members get instant feedback from the IDE instead of discovering bugs in code review or production.
+
+---
+
+## 24. Migration Strategy (Separated from App Startup)
+
+**Pattern:** Database migrations run as a separate step before the application starts — never during app startup.
+
+**Flow:**
+```
+docker-compose up
+    → db starts (PostgreSQL)
+    → migrate service runs (prisma migrate deploy) → exits
+    → api starts (npm start) — only after migration succeeds
+```
+
+**File structure:**
+```
+scripts/migrate.sh     ← standalone migration script
+Dockerfile             ← CMD is just "npm start" (no migration)
+docker-compose.yml     ← separate "migrate" service runs first
+```
+
+**Why this matters at scale:**
+
+- **No race conditions** — With multiple app instances, only one migration job runs. Instances don't compete to ALTER the same table.
+- **Fast startup** — App starts in seconds, not minutes. It doesn't wait for a 10-minute migration on a 100M row table.
+- **Rollback safety** — If migration fails, the app never starts. You fix the migration and retry. No half-migrated DB serving traffic.
+- **CI/CD integration** — Migration runs as a pipeline step: `migrate → smoke test → deploy app`. If migration fails, deploy is aborted.
+- **Kubernetes pattern** — Run migration as a `Job` (one-time), then deploy the app as a `Deployment` (many replicas). Same pattern used at Ritchie Bros and most enterprise K8s deployments.
