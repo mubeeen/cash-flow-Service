@@ -670,3 +670,27 @@ config.otel.endpoint     // OTEL_EXPORTER_OTLP_ENDPOINT
 - **Contract tests** — Catch breaking API changes before they reach consumers. Run on every CI build.
 - **Load tests** — Know your limits before users find them. Run before major releases.
 - **Capacity planning** — "We handle 400 req/sec per instance. Expected peak is 1,200 req/sec. We need 4 instances."
+
+---
+
+## 27. OpenAPI Specification
+
+**Pattern:** A machine-readable YAML file (`docs/openapi.yaml`) that describes every API endpoint, request/response schema, and error code.
+
+**What it documents:**
+- All endpoints with HTTP methods
+- Request parameters (query, path, body)
+- Request body schemas with validation rules
+- Response shapes for success and error cases
+- Rate limit headers
+- Health check endpoints
+
+**Why this matters at scale:**
+
+- **API-first development** — Design the API spec before writing code. Frontend and backend teams work in parallel.
+- **Auto-generated docs** — Paste into Swagger UI → interactive documentation with "Try it" buttons.
+- **Client SDK generation** — Tools like `openapi-generator` produce TypeScript/Python/Java clients from this file automatically.
+- **Contract enforcement** — The spec IS the contract. If code diverges from spec, it's a bug.
+- **Onboarding** — New developers understand the entire API in minutes without reading source code.
+
+**View it:** Paste `docs/openapi.yaml` into [editor.swagger.io](https://editor.swagger.io) to see interactive docs.
