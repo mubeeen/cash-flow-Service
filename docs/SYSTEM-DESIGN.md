@@ -455,3 +455,41 @@ src/modules/expense/
 ├── expense.service.ts     ← constructor(repository)
 └── expense.controller.ts  ← constructor(service)
 ```
+
+---
+
+## 20. Rate Limiting
+
+**Pattern:** Limit the number of requests a client can make within a time window. Exceeding the limit returns `429 Too Many Requests`.
+
+**Configuration:**
+- **Window:** 15 minutes
+- **Max requests:** 100 per IP per window
+- **Scope:** All `/api/*` routes
+
+**Response headers (every API response):**
+```
+X-RateLimit-Limit: 100          ← max allowed in window
+X-RateLimit-Remaining: 73       ← how many left
+X-RateLimit-Reset: 1715180400   ← when window resets (unix ms)
+```
+
+**When blocked (429):**
+```json
+{
+  "error": { "message": "Too many requests, please try again later", "statusCode": 429 }
+}
+```
+```
+Retry-After: 45   ← seconds until client can retry
+```
+
+**Why this matters at scale:**
+
+- **Protects resources** — One abusive client can't exhaust your DB connection pool, CPU, or memory. Other users remain unaffected.
+- **DDoS mitigation** — Basic defense against volumetric attacks. Not a replacement for WAF/Cloudflare, but a necessary application-level layer.
+- **Fair usage** — Ensures no single consumer monopolizes shared infrastructure.
+- **Cost control** — In cloud environments, every request costs money (compute, DB queries, egress). Rate limiting caps runaway costs.
+- **API monetization** — Different tiers (free: 100/hr, pro: 10,000/hr) are built on rate limiting.
+
+**Production upgrade path:** Replace in-memory store with Redis for multi-instance consistency. Same interface, different backend.
