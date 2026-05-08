@@ -10,6 +10,39 @@ Every pattern here — layered architecture, schema validation, response envelop
 
 ---
 
+## Quick Reference
+
+| # | Pattern | Section | Key Benefit |
+|---|---------|---------|-------------|
+| 1 | [Layered Architecture](#1-layered-architecture-separation-of-concerns) | §1 | Replace any layer without touching others |
+| 2 | [Custom Exceptions](#2-custom-exception-hierarchy) | §2 | Consistent errors, drives alerting (4xx vs 5xx) |
+| 3 | [Schema Validation (Zod)](#13-schema-validation-with-zod-input-boundary-protection) | §13 | Type-safe input, field-level error messages |
+| 4 | [Distributed Tracing (OTel)](#4-distributed-tracing-opentelemetry) | §4 | Debug any request across the entire stack |
+| 5 | [Database Design (Prisma)](#5-database-design-postgresql--prisma) | §5 | Migrations as code, connection pooling, UUIDs |
+| 6 | [Authentication](#6-authentication--session-management) | §6 | Stateless sessions, horizontal scaling ready |
+| 7 | [Docker + Compose](#7-containerization-docker--compose) | §7 | Environment parity, K8s-ready |
+| 8 | [Modular Domains](#8-modular-domain-organization) | §8 | Team ownership, microservice extraction path |
+| 9 | [Test Strategy](#9-testing-strategy-multi-layer) | §9 | Unit → Component → Integration → Contract |
+| 10 | [Observability Stack](#10-observability-stack-grafana--tempo) | §10 | Vendor-agnostic telemetry |
+| 11 | [Environment Config](#11-environment--configuration-management) | §11 | Fail-fast startup, per-env settings |
+| 12 | [Response Envelope](#12-response-envelope-standardized-api-contract) | §12 | Consistent `{ data, meta, error }` contract |
+| 13 | [Response DTOs](#14-response-dtos-data-transfer-objects) | §14 | Never expose DB internals or passwords |
+| 14 | [Health Checks](#15-health-check-endpoints-liveness--readiness-probes) | §15 | Liveness + Readiness for load balancers/K8s |
+| 15 | [Structured Logging (Pino)](#16-structured-logging-pino) | §16 | JSON logs, levels, machine-parseable |
+| 16 | [Request ID](#17-request-id-correlation) | §17 | Trace any issue with one ID |
+| 17 | [Graceful Shutdown](#18-graceful-shutdown) | §18 | Zero-downtime deploys, no dropped requests |
+| 18 | [Dependency Injection](#19-dependency-injection-constructor-injection) | §19 | Testable, SOLID, swappable dependencies |
+| 19 | [Rate Limiting](#20-rate-limiting) | §20 | Prevent abuse, protect resources |
+| 20 | [Security Headers](#21-security-headers) | §21 | XSS, clickjacking, MIME sniffing protection |
+| 21 | [API Versioning](#22-api-versioning) | §22 | Non-breaking API evolution |
+| 22 | [Stricter TypeScript](#23-stricter-typescript-configuration) | §23 | Catch more bugs at compile time |
+| 23 | [Migration Strategy](#24-migration-strategy-separated-from-app-startup) | §24 | No race conditions in multi-instance deploys |
+| 24 | [Config Management](#25-config-management-per-environment) | §25 | Per-environment settings, single source of truth |
+| 25 | [Contract & Load Tests](#26-contract-tests--load-tests) | §26 | Protect API shape + know performance limits |
+| 26 | [OpenAPI Spec](#27-openapi-specification) | §27 | Machine-readable API docs, SDK generation |
+
+---
+
 ## Overview
 
 This application is designed as a **scalable, enterprise-grade Node/TypeScript service** following industry-standard patterns used in production microservices at companies like Stripe, Shopify, and Ritchie Bros.
