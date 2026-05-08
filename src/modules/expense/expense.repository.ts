@@ -1,10 +1,12 @@
-import { prisma } from '@/lib/db';
+import type { PrismaClient } from '@prisma/client';
 import { withSpan } from '@/lib/tracing';
 
 export class ExpenseRepository {
-  static findAll(where: object, skip: number, take: number) {
+  constructor(private db: PrismaClient) {}
+
+  findAll(where: object, skip: number, take: number) {
     return withSpan('ExpenseRepository.findAll', () =>
-      prisma.expense.findMany({
+      this.db.expense.findMany({
         where,
         include: { category: true },
         orderBy: { date: 'desc' },
@@ -14,36 +16,33 @@ export class ExpenseRepository {
     );
   }
 
-  static count(where: object) {
+  count(where: object) {
     return withSpan('ExpenseRepository.count', () =>
-      prisma.expense.count({ where }),
+      this.db.expense.count({ where }),
     );
   }
 
-  static findById(id: string) {
+  findById(id: string) {
     return withSpan('ExpenseRepository.findById', () =>
-      prisma.expense.findUnique({ where: { id }, include: { category: true } }),
-      { expenseId: id },
+      this.db.expense.findUnique({ where: { id }, include: { category: true } }),
     );
   }
 
-  static create(data: { item: string; price: number; date: string; categoryId: string }) {
+  create(data: { item: string; price: number; date: string; categoryId: string }) {
     return withSpan('ExpenseRepository.create', () =>
-      prisma.expense.create({ data }),
+      this.db.expense.create({ data }),
     );
   }
 
-  static update(id: string, data: object) {
+  update(id: string, data: object) {
     return withSpan('ExpenseRepository.update', () =>
-      prisma.expense.update({ where: { id }, data }),
-      { expenseId: id },
+      this.db.expense.update({ where: { id }, data }),
     );
   }
 
-  static delete(id: string) {
+  delete(id: string) {
     return withSpan('ExpenseRepository.delete', () =>
-      prisma.expense.delete({ where: { id } }),
-      { expenseId: id },
+      this.db.expense.delete({ where: { id } }),
     );
   }
 }

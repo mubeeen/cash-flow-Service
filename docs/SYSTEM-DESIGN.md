@@ -418,3 +418,40 @@ SIGTERM received
 - **Docker stop** — Same pattern. `docker stop` sends SIGTERM first, waits 10s, then SIGKILL.
 
 **Without graceful shutdown:** Deploy = brief outage. With it: zero-downtime deploys.
+
+---
+
+## 19. Dependency Injection (Constructor Injection)
+
+**Pattern:** Each class receives its dependencies through the constructor instead of importing them directly.
+
+**Wiring:**
+```
+Container (index.ts)
+    → creates ExpenseRepository(prisma)
+    → creates ExpenseService(repository)
+    → creates ExpenseController(service)
+    → exports expenseController
+```
+
+**Why this matters at scale:**
+
+- **Testability** — Test any layer in isolation by passing a fake. No `jest.mock` needed:
+  ```ts
+  const fakeRepo = { findById: jest.fn().mockResolvedValue(null) };
+  const service = new ExpenseService(fakeRepo);
+  // test service logic without a real DB
+  ```
+- **Swappability** — Need a Redis-cached repository? Create `CachedExpenseRepository` with the same interface, pass it to the service. Zero changes to business logic.
+- **SOLID principles** — Dependency Inversion Principle: high-level modules (service) don't depend on low-level modules (Prisma). Both depend on abstractions.
+- **Explicit dependencies** — Looking at a constructor tells you exactly what a class needs. No hidden imports buried in the file.
+- **Multiple instances** — Need two services with different configs? Create two instances with different dependencies. Impossible with static methods.
+
+**File structure:**
+```
+src/modules/expense/
+├── index.ts                ← container (wires dependencies)
+├── expense.repository.ts  ← constructor(prisma)
+├── expense.service.ts     ← constructor(repository)
+└── expense.controller.ts  ← constructor(service)
+```

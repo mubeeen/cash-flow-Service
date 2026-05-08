@@ -1,9 +1,9 @@
-import { ExpenseController } from '@/modules/expense/expense.controller';
+import { expenseController } from '@/modules/expense';
 
 export async function GET(request: Request) {
-  return ExpenseController.getAll(request);
+  return expenseController.getAll(request);
 }
 
 export async function POST(request: Request) {
-  return ExpenseController.create(request);
+  return expenseController.create(request);
 }
