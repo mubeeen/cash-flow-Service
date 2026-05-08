@@ -40,8 +40,8 @@ jest.mock('@/lib/db', () => {
   };
 });
 
-import { GET, POST } from '@/app/api/expenses/route';
-import { GET as GET_ONE, PATCH, DELETE } from '@/app/api/expenses/[id]/route';
+import { GET, POST } from '@/app/api/v1/expenses/route';
+import { GET as GET_ONE, PATCH, DELETE } from '@/app/api/v1/expenses/[id]/route';
 
 describe('Expense CRUD Integration', () => {
   it('full lifecycle: create → read → update → delete', async () => {

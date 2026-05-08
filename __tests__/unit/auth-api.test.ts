@@ -21,8 +21,8 @@ jest.mock('next/headers', () => ({
 
 import { prisma } from '@/lib/db';
 import bcrypt from 'bcryptjs';
-import { POST as register } from '@/app/api/auth/register/route';
-import { POST as login } from '@/app/api/auth/login/route';
+import { POST as register } from '@/app/api/v1/auth/register/route';
+import { POST as login } from '@/app/api/v1/auth/login/route';
 
 describe('POST /api/auth/register', () => {
   beforeEach(() => jest.clearAllMocks());

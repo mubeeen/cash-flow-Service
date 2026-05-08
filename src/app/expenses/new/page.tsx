@@ -11,7 +11,7 @@ export default function NewExpensePage() {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    fetch('/api/categories').then((r) => r.json()).then(setCategories);
+    fetch('/api/v1/categories').then((r) => r.json()).then(setCategories);
   }, []);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -26,7 +26,7 @@ export default function NewExpensePage() {
       categoryId: form.get('categoryId') as string,
     };
 
-    const res = await fetch('/api/expenses', {
+    const res = await fetch('/api/v1/expenses', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),

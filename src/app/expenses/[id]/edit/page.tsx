@@ -16,8 +16,8 @@ export default function EditExpensePage({ params }: { params: { id: string } }) 
 
   useEffect(() => {
     Promise.all([
-      fetch(`/api/expenses/${params.id}`).then((r) => r.json()),
-      fetch('/api/categories').then((r) => r.json()),
+      fetch(`/api/v1/expenses/${params.id}`).then((r) => r.json()),
+      fetch('/api/v1/categories').then((r) => r.json()),
     ]).then(([expense, cats]: [Expense, Category[]]) => {
       setItem(expense.item);
       setPrice(String(expense.price));
@@ -38,7 +38,7 @@ export default function EditExpensePage({ params }: { params: { id: string } }) 
       categoryId,
     };
 
-    await fetch(`/api/expenses/${params.id}`, {
+    await fetch(`/api/v1/expenses/${params.id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),

@@ -8,7 +8,7 @@ export function DeleteButton({ id }: { id: string }) {
   async function handleDelete() {
     if (!confirm('Delete this expense?')) return;
 
-    await fetch(`/api/expenses/${id}`, { method: 'DELETE' });
+    await fetch(`/api/v1/expenses/${id}`, { method: 'DELETE' });
     router.push('/expenses');
     router.refresh();
   }

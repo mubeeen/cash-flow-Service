@@ -517,3 +517,28 @@ Retry-After: 45   ← seconds until client can retry
 - **Compliance** — Security audits (SOC2, PCI-DSS) require these headers. Without them, you fail automated scans.
 - **Defense in depth** — Even if your code has a bug, these headers limit what an attacker can exploit.
 - **Applied at lowest level** — Configured in `next.config.js`, applied by the server before middleware or route handlers run. Cannot be accidentally skipped.
+
+---
+
+## 22. API Versioning
+
+**Pattern:** All business API routes are prefixed with a version number (`/api/v1/`). Infrastructure endpoints (`/api/health`, `/api/ready`) remain unversioned.
+
+**Route structure:**
+```
+/api/v1/expenses          ← versioned business API
+/api/v1/expenses/:id
+/api/v1/auth/login
+/api/v1/auth/register
+/api/v1/categories
+/api/health               ← unversioned infrastructure
+/api/ready
+```
+
+**Why this matters at scale:**
+
+- **Non-breaking evolution** — Need to restructure the response? Create `/api/v2/expenses` with the new shape. v1 clients keep working.
+- **Mobile app compatibility** — Users don't update apps immediately. Old app versions call v1, new versions call v2. Both work simultaneously.
+- **Deprecation path** — Announce "v1 sunset in 6 months", monitor usage, then remove. No surprise breakage.
+- **Third-party integrations** — Partners build against a stable version. They migrate on their schedule, not yours.
+- **Independent deployment** — v1 and v2 handlers can coexist in the same codebase or be split into separate services later.

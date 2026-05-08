@@ -34,7 +34,7 @@ describe('DeleteButton', () => {
     render(<DeleteButton id="123" />);
     await user.click(screen.getByTitle('Delete'));
 
-    expect(global.fetch).toHaveBeenCalledWith('/api/expenses/123', { method: 'DELETE' });
+    expect(global.fetch).toHaveBeenCalledWith('/api/v1/expenses/123', { method: 'DELETE' });
   });
 
   it('does not call API when cancelled', async () => {

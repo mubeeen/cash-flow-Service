@@ -18,7 +18,7 @@ jest.mock('@/lib/db', () => ({
   },
 }));
 
-import { GET, POST } from '@/app/api/expenses/route';
+import { GET, POST } from '@/app/api/v1/expenses/route';
 
 describe('GET /api/expenses', () => {
   it('returns expenses with pagination', async () => {

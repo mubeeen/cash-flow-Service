@@ -27,7 +27,7 @@ export function ExpenseTable({ initialExpenses, categories }: { initialExpenses:
     params.set('page', String(page));
     params.set('limit', '5');
 
-    fetch(`/api/expenses?${params}`)
+    fetch(`/api/v1/expenses?${params}`)
       .then((r) => r.json())
       .then((data) => {
         setExpenses(data.expenses);
