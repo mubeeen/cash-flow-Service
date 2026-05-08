@@ -9,7 +9,7 @@ export async function register() {
     const { prisma } = await import('@/lib/db');
 
     const sdk = new NodeSDK({
-      serviceName: 'expense-tracker',
+      serviceName: 'cashflow-service',
       traceExporter: new OTLPTraceExporter({
         url: config.otel.endpoint,
       }),

@@ -4,7 +4,7 @@ import { cookies } from 'next/headers';
 import { LogoutButton } from '@/components/LogoutButton';
 
 export const metadata = {
-  title: 'Expense Tracker',
+  title: 'CashFlow Service',
   description: 'Track your expenses',
 };
 

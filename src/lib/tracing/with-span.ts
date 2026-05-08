@@ -1,6 +1,6 @@
 import { trace, SpanStatusCode } from '@opentelemetry/api';
 
-const tracer = trace.getTracer('expense-tracker');
+const tracer = trace.getTracer('cashflow-service');
 
 export async function withSpan<T>(name: string, fn: () => Promise<T>, attributes?: Record<string, string | number>): Promise<T> {
   return tracer.startActiveSpan(name, async (span) => {

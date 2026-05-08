@@ -1,6 +1,6 @@
 openapi: 3.0.3
 info:
-  title: Expense Tracker API
+  title: CashFlow Service API
   description: Enterprise-grade expense tracking API built with Node.js and TypeScript
   version: 1.0.0
 

@@ -1,4 +1,4 @@
-# System Design Document — Expense Tracker
+# System Design Document — CashFlow Service
 
 ## Intent
 

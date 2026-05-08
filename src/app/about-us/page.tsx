@@ -7,9 +7,9 @@ export default function AboutUsPage() {
 
       <div className="bg-white rounded-xl shadow-sm border p-6 space-y-6">
         <div>
-          <h2 className="text-lg font-semibold mb-2">What is Expense Tracker?</h2>
+          <h2 className="text-lg font-semibold mb-2">What is CashFlow Service?</h2>
           <p className="text-gray-600 text-sm leading-relaxed">
-            Expense Tracker is a simple, fast tool to help you manage your daily spending.
+            CashFlow Service is a simple, fast tool to help you manage your daily spending.
             Add expenses, organize them by category, and see where your money goes.
           </p>
         </div>
